@@ -7,6 +7,11 @@ class KimiCli < Formula
 
   depends_on "python@3.13"
 
+  # Skip relocation/cleaning of the virtualenv — compiled Python extensions
+  # (e.g. cryptography's Rust bindings) have compact Mach-O headers that
+  # Homebrew's relocator cannot rewrite.
+  skip_clean "libexec"
+
   def install
     python3 = Formula["python@3.13"].opt_bin/"python3.13"
 
