@@ -7,28 +7,25 @@ class KimiCli < Formula
 
   depends_on "python@3.13"
 
-  # Skip relocation/cleaning of the virtualenv — compiled Python extensions
-  # (e.g. cryptography's Rust bindings) have compact Mach-O headers that
-  # Homebrew's relocator cannot rewrite.
-  skip_clean "libexec"
-
   def install
     python3 = Formula["python@3.13"].opt_bin/"python3.13"
 
-    # Create isolated virtualenv
-    venv_dir = libexec
-    system python3, "-m", "venv", venv_dir
-    venv_pip = venv_dir/"bin/pip"
+    # Create isolated virtualenv (pip install happens in post_install
+    # to avoid Homebrew's Mach-O relocation failing on compiled extensions
+    # like cryptography's Rust bindings)
+    system python3, "-m", "venv", libexec
 
-    # Upgrade pip and install kimi-cli with all dependencies
-    system venv_pip, "install", "--upgrade", "pip"
-    system venv_pip, "install", "--no-cache-dir", "kimi-cli==1.8.0"
+    # Create wrapper script for the kimi binary
+    (bin/"kimi").write <<~BASH
+      #!/bin/bash
+      export PATH="#{libexec}/bin:$PATH"
+      exec "#{libexec}/bin/kimi" "$@"
+    BASH
+  end
 
-    # Link the kimi binary into Homebrew's bin
-    (bin/"kimi").write_env_script(
-      venv_dir/"bin/kimi",
-      PATH: "#{venv_dir}/bin:$PATH"
-    )
+  def post_install
+    system libexec/"bin/pip", "install", "--upgrade", "pip"
+    system libexec/"bin/pip", "install", "--no-cache-dir", "kimi-cli==1.8.0"
   end
 
   def caveats
