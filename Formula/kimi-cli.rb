@@ -24,7 +24,6 @@ class KimiCli < Formula
   end
 
   def post_install
-    system libexec/"bin/pip", "install", "--upgrade", "pip"
     system libexec/"bin/pip", "install", "--no-cache-dir", "kimi-cli==1.8.0"
   end
 
